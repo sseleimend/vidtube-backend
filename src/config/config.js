@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 
 import { env } from "../utils/constants.js";
+import { responseFormatter } from "../middlewares/responseFormatter.js";
 
 if (env.IS_LOCAL) {
   dotenv.config({ path: ".env.local" });
@@ -28,6 +29,8 @@ class App {
       credentials: true,
     };
     this.#app.use(cors(corsOptions));
+
+    this.#app.use(responseFormatter);
   }
 
   routes() {
