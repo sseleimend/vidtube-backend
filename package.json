@@ -15,8 +15,10 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "start": "cross-env IS_LOCAL=0 NODE_ENV=production node src/index.js",
+    "dev": "cross-env IS_LOCAL=1 NODE_ENV=development nodemon src/index.js",
+    "test": "cross-env IS_LOCAL=1 NODE_ENV=test nodemon src/index.js",
+    "prod": "cross-env IS_LOCAL=1 NODE_ENV=production nodemon src/index.js"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",
