@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 
 const env = {
   NODE_ENV: process.env.NODE_ENV || "development",
@@ -14,6 +15,12 @@ if (env.IS_LOCAL) {
 }
 
 const app = express();
+
+const corsOptions = {
+  origin: process.env.ORIGIN,
+  credentials: true,
+};
+app.use(cors(corsOptions));
 
 const PORT = parseInt(process.env.PORT) || 3001;
 app.listen(PORT, () => {
