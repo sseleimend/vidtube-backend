@@ -2,7 +2,7 @@ import express from "express";
 
 import connectToDatabase from "./db/index.js";
 import configureApp from "./config/config.js";
-import { env } from "./constants.js";
+import { env } from "./utils/constants.js";
 
 const app = express();
 

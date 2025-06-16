@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import cors from "cors";
 
-import { env } from "../constants.js";
+import { env } from "../utils/constants.js";
 
 if (env.IS_LOCAL) {
   dotenv.config({ path: ".env.local" });
