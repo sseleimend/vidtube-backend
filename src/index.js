@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 
+import connectToDatabase from "./db/index.js";
+
 const env = {
   NODE_ENV: process.env.NODE_ENV || "development",
   IS_LOCAL: Number(process.env.IS_LOCAL),
@@ -26,11 +28,20 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-const PORT = parseInt(process.env.PORT) || 3001;
-app.listen(PORT, () => {
-  console.log(
-    `App listening on port ${PORT} in the${env.IS_LOCAL ? " local" : ""} ${env.NODE_ENV} environment`,
-  );
-});
+bootstrap();
 
-export { app };
+async function bootstrap() {
+  try {
+    await connectToDatabase();
+
+    const PORT = parseInt(process.env.PORT) || 3001;
+    app.listen(PORT, () => {
+      console.log(
+        `App listening on port ${PORT} in the${env.IS_LOCAL ? " local" : ""} ${env.NODE_ENV} environment`,
+      );
+    });
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+}
