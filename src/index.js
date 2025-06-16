@@ -6,8 +6,7 @@ bootstrap();
 async function bootstrap() {
   try {
     await connectToDatabase();
-    app.configure();
-    app.listen();
+    app.routes().listen();
   } catch (error) {
     console.error(error);
     process.exit(1);

@@ -11,35 +11,38 @@ if (env.IS_LOCAL) {
   dotenv.config();
 }
 
-const app = express();
+class App {
+  #app = express();
 
-function configure() {
-  app.use(express.json({ limit: "16kb" }));
-  app.use(express.urlencoded({ extended: true, limit: "16kb" }));
-  app.use(express.static("public"));
+  constructor() {
+    this.#configure();
+  }
 
-  const corsOptions = {
-    origin: process.env.ORIGIN,
-    credentials: true,
-  };
-  app.use(cors(corsOptions));
+  #configure() {
+    this.#app.use(express.json({ limit: "16kb" }));
+    this.#app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+    this.#app.use(express.static("public"));
 
-  return app;
+    const corsOptions = {
+      origin: process.env.ORIGIN,
+      credentials: true,
+    };
+    this.#app.use(cors(corsOptions));
+  }
+
+  routes() {
+    return this;
+  }
+
+  listen() {
+    const PORT = parseInt(process.env.PORT) || 3001;
+
+    this.#app.listen(PORT, () => {
+      console.log(
+        `App listening on port ${PORT} in the${env.IS_LOCAL ? " local" : ""} ${env.NODE_ENV} environment`,
+      );
+    });
+  }
 }
 
-function listen() {
-  const PORT = parseInt(process.env.PORT) || 3001;
-
-  app.listen(PORT, () => {
-    console.log(
-      `App listening on port ${PORT} in the${env.IS_LOCAL ? " local" : ""} ${env.NODE_ENV} environment`,
-    );
-  });
-
-  return app;
-}
-
-export default {
-  configure,
-  listen,
-};
+export default new App();
