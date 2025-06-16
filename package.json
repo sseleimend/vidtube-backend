@@ -1,0 +1,20 @@
+{
+  "name": "vidtube-backend",
+  "version": "1.0.0",
+  "description": "A project inspired by YouTube",
+  "homepage": "https://github.com/sseleimend/vidtube-backend#readme",
+  "bugs": {
+    "url": "https://github.com/sseleimend/vidtube-backend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sseleimend/vidtube-backend.git"
+  },
+  "license": "MIT",
+  "author": "Victor Seleimend",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
