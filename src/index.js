@@ -1,20 +1,8 @@
 import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
 
 import connectToDatabase from "./db/index.js";
-
-const env = {
-  NODE_ENV: process.env.NODE_ENV || "development",
-  IS_LOCAL: Number(process.env.IS_LOCAL),
-};
-
-if (env.IS_LOCAL) {
-  dotenv.config({ path: ".env.local" });
-  dotenv.config({ path: `.env.${env.NODE_ENV}.local` });
-} else {
-  dotenv.config();
-}
+import configureApp from "./config/config.js";
+import { env } from "./constants.js";
 
 const app = express();
 
@@ -22,11 +10,7 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 
-const corsOptions = {
-  origin: process.env.ORIGIN,
-  credentials: true,
-};
-app.use(cors(corsOptions));
+configureApp(app);
 
 bootstrap();
 
