@@ -4,6 +4,7 @@ import cors from "cors";
 
 import { env } from "../utils/constants.js";
 import { responseFormatter } from "../middlewares/responseFormatter.js";
+import healthcheckRoutes from "../routes/healthcheck.routes.js";
 
 if (env.IS_LOCAL) {
   dotenv.config({ path: ".env.local" });
@@ -34,6 +35,8 @@ class App {
   }
 
   routes() {
+    this.#app.use("/api/v1/healthcheck", healthcheckRoutes);
+
     return this;
   }
 
