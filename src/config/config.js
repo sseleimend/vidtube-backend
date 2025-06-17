@@ -5,6 +5,7 @@ import cors from "cors";
 import { env } from "../utils/constants.js";
 import { responseFormatter } from "../middlewares/responseFormatter.js";
 import healthcheckRoutes from "../routes/healthcheck.routes.js";
+import cookieParser from "cookie-parser";
 
 if (env.IS_LOCAL) {
   dotenv.config({ path: ".env.local" });
@@ -30,6 +31,8 @@ class App {
       credentials: true,
     };
     this.#app.use(cors(corsOptions));
+
+    this.#app.use(cookieParser());
 
     this.#app.use(responseFormatter);
   }
