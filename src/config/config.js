@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 
 import { env } from "../utils/constants.js";
-import { responseFormatter } from "../middlewares/responseFormatter.js";
+import { responseFormatter } from "../middlewares/responseFormatter.middleware.js";
 import healthcheckRoutes from "../routes/healthcheck.routes.js";
 import cookieParser from "cookie-parser";
 
