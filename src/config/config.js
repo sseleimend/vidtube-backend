@@ -1,18 +1,14 @@
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 
 import { env } from "../utils/constants.js";
+import "./envConfig.js";
 import { responseFormatter } from "../middlewares/responseFormatter.middleware.js";
-import healthcheckRoutes from "../routes/healthcheck.routes.js";
+import healthcheckRouter from "../routes/healthcheck.routes.js";
+import userRouter from "../routes/user.routes.js";
 import cookieParser from "cookie-parser";
-
-if (env.IS_LOCAL) {
-  dotenv.config({ path: ".env.local" });
-  dotenv.config({ path: `.env.${env.NODE_ENV}.local` });
-} else {
-  dotenv.config();
-}
+import { errorHandler } from "../middlewares/error.middleware.js";
+import { StatusCodes } from "http-status-codes";
 
 class App {
   #app = express();
@@ -38,7 +34,18 @@ class App {
   }
 
   routes() {
-    this.#app.use("/api/v1/healthcheck", healthcheckRoutes);
+    this.#app.use("/api/v1/healthcheck", healthcheckRouter);
+    this.#app.use("/api/v1/users", userRouter);
+
+    return this;
+  }
+
+  error() {
+    this.#app.use((req, res) => {
+      res.status(StatusCodes.NOT_FOUND).json(null);
+    });
+
+    this.#app.use(errorHandler);
 
     return this;
   }
