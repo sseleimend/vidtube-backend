@@ -29,7 +29,7 @@ const userSchema = new Schema(
     },
     fullname: {
       type: String,
-      required: [true, "Username is required"],
+      required: [true, "Fullname is required"],
       trim: true,
       maxLength: [100, "Fullname cannot be more than 100 characters"],
     },
@@ -61,10 +61,10 @@ const userSchema = new Schema(
 );
 
 userSchema.pre("save", async function (next) {
-  if (!this.modified("password")) return next();
+  if (!this.isModified("password")) return next();
 
-  const salt = bcrypt.genSalt();
-  this.password = bcrypt.hash(this.password, salt);
+  const salt = await bcrypt.genSalt();
+  this.password = await bcrypt.hash(this.password, salt);
 
   next();
 });
