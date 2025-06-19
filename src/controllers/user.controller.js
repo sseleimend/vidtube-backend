@@ -8,6 +8,73 @@ import {
 import { StatusCodes } from "http-status-codes";
 import fs from "fs";
 
+const genAccessAndRefreshToken = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "User don't exists");
+    }
+
+    const accessToken = user.genAccessToken();
+    const refreshToken = user.genRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Something went wrong while generating access and refresh tokens",
+    );
+  }
+};
+
+const loginUser = asyncHandler(async (req, res) => {
+  const { email, username, password } = req.body;
+
+  if (!email) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Email is required");
+  }
+
+  const user = await User.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  if (!user) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "User don't exists");
+  }
+
+  const isPasswordValid = await user.isPasswordCorrect(password);
+
+  if (!isPasswordValid) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid credentials");
+  }
+
+  const { accessToken, refreshToken } = await genAccessAndRefreshToken(
+    user._id,
+  );
+
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken",
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  };
+
+  return res
+    .status(StatusCodes.OK)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json({
+      user: loggedInUser,
+      accessToken,
+      refreshToken,
+    });
+});
+
 const registerUser = asyncHandler(async (req, res) => {
   let avatarLocalPath;
   let coverLocalPath;
@@ -85,4 +152,4 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser };
+export { registerUser, loginUser };
