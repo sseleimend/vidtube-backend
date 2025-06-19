@@ -7,6 +7,7 @@ import {
 } from "../utils/cloudinary.js";
 import { StatusCodes } from "http-status-codes";
 import fs from "fs";
+import jwt from "jsonwebtoken";
 
 const genAccessAndRefreshToken = async (userId) => {
   try {
@@ -21,6 +22,7 @@ const genAccessAndRefreshToken = async (userId) => {
 
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
+
     return { accessToken, refreshToken };
   } catch (error) {
     throw new ApiError(
@@ -152,4 +154,51 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser };
+const logoutUser = asyncHandler(async (req, res) => {
+  // await User.findByIdAndUpdate(req.user._id);
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshtoken;
+
+  if (!incomingRefreshToken) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "Refresh token is required");
+  }
+
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.JWT_REFRESH_SECRET,
+    );
+
+    const user = await User.findById(decodedToken._id);
+    if (!user) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid refresh token");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    };
+
+    const { accessToken, refreshToken: newRefreshToken } =
+      await genAccessAndRefreshToken(user._id);
+
+    return res
+      .status(StatusCodes.OK)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json({
+        accessToken,
+        refreshToken: newRefreshToken,
+      });
+  } catch (error) {
+    throw new ApiError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      "Something went wrong while refreshing access token",
+    );
+  }
+});
+
+export { registerUser, loginUser, refreshAccessToken };
