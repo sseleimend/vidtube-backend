@@ -222,4 +222,112 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, refreshAccessToken, logoutUser };
+const changeCurrentPassword = asyncHandler(async (req, res, next) => {
+  const { oldPassword, newPassword } = req.body;
+
+  const user = await User.findById(req.user?._id);
+
+  const isPasswordValid = await user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordValid) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "Old password is incorrect");
+  }
+
+  user.password = newPassword;
+
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(StatusCodes.OK).json(null);
+});
+
+const getCurrentUser = asyncHandler(async (req, res, next) => {
+  return res.status(StatusCodes.OK).json(req.user);
+});
+
+const updateAccountDetails = asyncHandler(async (req, res, next) => {
+  const { fullname, email } = req.body;
+
+  if (!fullname || !email) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Fullname and email are required",
+    );
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        fullname,
+        email,
+      },
+    },
+    { new: true },
+  ).select("-password -refreshToken");
+
+  return res.status(StatusCodes.OK).json(user);
+});
+
+const updateUserAvatar = asyncHandler(async (req, res, next) => {
+  const avatarLocalPath = req.files?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "File is required");
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatar.url) {
+    throw new ApiError(500, "Something went wrong while uploading avatar");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    { new: true },
+  ).select("-password -refreshToken");
+
+  res.status(200).json(user);
+});
+
+const updateUserCoverImage = asyncHandler(async (req, res, next) => {
+  const coverLocalPath = req.files?.path;
+
+  if (!coverLocalPath) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "File is required");
+  }
+
+  const cover = await uploadOnCloudinary(coverLocalPath);
+
+  if (!cover.url) {
+    throw new ApiError(500, "Something went wrong while uploading cover image");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: cover.url,
+      },
+    },
+    { new: true },
+  ).select("-password -refreshToken");
+
+  res.status(StatusCodes.OK).json(user);
+});
+
+export {
+  registerUser,
+  loginUser,
+  refreshAccessToken,
+  logoutUser,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage,
+};
