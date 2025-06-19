@@ -8,6 +8,7 @@ import {
 import { StatusCodes } from "http-status-codes";
 import fs from "fs";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const genAccessAndRefreshToken = async (userId) => {
   try {
@@ -318,6 +319,131 @@ const updateUserCoverImage = asyncHandler(async (req, res, next) => {
   ).select("-password -refreshToken");
 
   res.status(StatusCodes.OK).json(user);
+});
+
+const getUserChannelProfile = asyncHandler(async (req, res, next) => {
+  const { username } = req.params;
+
+  if (!username) {
+    throw new AudioParam(StatusCodes.BAD_REQUEST, "Username is required");
+  }
+
+  const channel = await User.aggregate([
+    {
+      $match: {
+        username: username?.toLowerCase(),
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        channelsSubscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: {
+            if: {
+              $in: [
+                req.user?._id,
+                {
+                  $map: {
+                    input: "$subscribers",
+                    as: "s",
+                    in: "$$s.subscriber",
+                  },
+                },
+              ],
+            },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        fullname: 1,
+        username: 1,
+        avatar: 1,
+        subscribersCount: 1,
+        channelsSubscribedToCount: 1,
+        isSubscribed: 1,
+        coverImage: 1,
+        email: 1,
+      },
+    },
+  ]);
+
+  if (!channel?.length) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Channel not found");
+  }
+
+  return res.status(StatusCodes.OK).json(channel[0]);
+});
+
+const getWatchHistory = asyncHandler(async (req, res, next) => {
+  const user = await User.aggregate([
+    {
+      $match: {
+        _id: mongoose.Types.ObjectId.createFromHexString(req.user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignKey: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    fullname: 1,
+                    username: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                // $arrayElemAt: ["$owner", 0]
+                $first: "$owner",
+              },
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
+  return res.status(StatusCodes.OK).json(user[0].watchHistory);
 });
 
 export {
